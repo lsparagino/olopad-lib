@@ -1,0 +1,68 @@
+name: Publish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/*/package.json'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Ensure latest npm (OIDC requires >= 11.5.1)
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build @olopad/cdk-cognito-branding
+        run: npm run build -w packages/cdk-cognito-branding
+
+      - name: Build @olopad/ngx-consent
+        run: npm run build -w packages/ngx-consent
+
+      # Publish only if the local version is not yet on npm
+      - name: Publish @olopad/cdk-cognito-branding
+        run: |
+          LOCAL=$(node -p "require('./packages/cdk-cognito-branding/package.json').version")
+          REMOTE=$(npm view @olopad/cdk-cognito-branding version 2>/dev/null || echo "0.0.0")
+          if [ "$LOCAL" != "$REMOTE" ]; then
+            echo "Publishing @olopad/cdk-cognito-branding@$LOCAL (npm has $REMOTE)"
+            npm publish --access public -w packages/cdk-cognito-branding
+          else
+            echo "Skipping @olopad/cdk-cognito-branding — $LOCAL already published"
+          fi
+
+      - name: Publish @olopad/ngx-consent
+        run: |
+          LOCAL=$(node -p "require('./dist/ngx-consent/package.json').version")
+          REMOTE=$(npm view @olopad/ngx-consent version 2>/dev/null || echo "0.0.0")
+          if [ "$LOCAL" != "$REMOTE" ]; then
+            echo "Publishing @olopad/ngx-consent@$LOCAL (npm has $REMOTE)"
+            cd dist/ngx-consent && npm publish --access public
+          else
+            echo "Skipping @olopad/ngx-consent — $LOCAL already published"
+          fi
+
+      - name: Publish @olopad/consent-setup
+        run: |
+          LOCAL=$(node -p "require('./packages/consent-setup/package.json').version")
+          REMOTE=$(npm view @olopad/consent-setup version 2>/dev/null || echo "0.0.0")
+          if [ "$LOCAL" != "$REMOTE" ]; then
+            echo "Publishing @olopad/consent-setup@$LOCAL (npm has $REMOTE)"
+            npm publish --access public -w packages/consent-setup
+          else
+            echo "Skipping @olopad/consent-setup — $LOCAL already published"
+          fi
