@@ -1,6 +1,6 @@
 {
   "name": "@olopad/ngx-consent",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Angular GDPR cookie consent with Google Tag Manager & Consent Mode v2",
   "license": "MIT",
   "repository": {
