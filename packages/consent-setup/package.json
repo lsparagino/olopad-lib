@@ -3,6 +3,11 @@
   "version": "0.0.4",
   "description": "CLI tool to automate GTM + GA4 setup with Google Consent Mode v2",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lsparagino/olopad-lib",
+    "directory": "packages/consent-setup"
+  },
   "type": "module",
   "bin": {
     "consent-setup": "bin/setup-gtm.mjs"

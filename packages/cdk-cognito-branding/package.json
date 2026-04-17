@@ -3,6 +3,11 @@
   "version": "0.0.1",
   "description": "AWS CDK construct for Cognito managed login branding with OloPad dark theme",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lsparagino/olopad-lib",
+    "directory": "packages/cdk-cognito-branding"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": ["dist"],
