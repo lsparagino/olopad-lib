@@ -1,6 +1,6 @@
 {
   "name": "@olopad/consent-setup",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "CLI tool to automate GTM + GA4 setup with Google Consent Mode v2",
   "license": "MIT",
   "repository": {
