@@ -359,7 +359,7 @@ async function setupGTM(auth, measurementId) {
   const shouldPublish = (await prompt('\nPublish this GTM container version? (y/n) [y]: ') || 'y').toLowerCase();
   if (shouldPublish === 'y') {
     log('Publishing container version...');
-    const { data: version } = await tagmanager.accounts.containers.workspaces.createVersion({
+    const { data: version } = await tagmanager.accounts.containers.workspaces.create_version({
       path: workspace.path,
       requestBody: {
         name: 'Consent Mode v2 Setup',
