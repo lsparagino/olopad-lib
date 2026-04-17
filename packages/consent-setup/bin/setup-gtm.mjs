@@ -49,6 +49,7 @@ function error(msg) { console.error(`\x1b[31m✖\x1b[0m ${msg}`); }
 const SCOPES = [
   'https://www.googleapis.com/auth/tagmanager.edit.containers',
   'https://www.googleapis.com/auth/tagmanager.edit.containerversions',
+  'https://www.googleapis.com/auth/tagmanager.publish',
   'https://www.googleapis.com/auth/tagmanager.manage.accounts',
   'https://www.googleapis.com/auth/analytics.edit',
 ];
@@ -91,8 +92,19 @@ To create OAuth2 credentials:
       writeFileSync(TOKEN_PATH, JSON.stringify(newCreds, null, 2));
     }
 
-    success('Authenticated with existing token');
-    return oauth2Client;
+    // Verify token has required scopes
+    if (token.scope) {
+      log(`Token scopes: ${token.scope}`);
+      if (!token.scope.includes('tagmanager.publish')) {
+        warn('Token is missing tagmanager.publish scope — re-authenticating...');
+      } else {
+        success('Authenticated with existing token');
+        return oauth2Client;
+      }
+    } else {
+      success('Authenticated with existing token');
+      return oauth2Client;
+    }
   }
 
   // Interactive OAuth2 flow
@@ -302,8 +314,8 @@ async function setupGTM(auth, measurementId) {
   const { data: workspace } = await tagmanager.accounts.containers.workspaces.create({
     parent: container.path,
     requestBody: {
-      name: `consent-setup-${Date.now()}`,
-      description: 'Automated consent-mode setup',
+      name: `${container.name} — Consent Mode`,
+      description: 'Automated consent-mode setup via @olopad/consent-setup',
     },
   });
   success(`Workspace created: ${workspace.name}`);
@@ -368,10 +380,15 @@ async function setupGTM(auth, measurementId) {
     });
 
     // Publish the version
-    await tagmanager.accounts.containers.versions.publish({
-      path: version.containerVersion.path,
-    });
-    success('Container version published!');
+    try {
+      await tagmanager.accounts.containers.versions.publish({
+        path: version.containerVersion.path,
+      });
+      success('Container version published!');
+    } catch (pubErr) {
+      warn(`Auto-publish failed: ${pubErr.message}`);
+      warn('Please publish manually: tagmanager.google.com → your container → Submit → Publish');
+    }
   } else {
     warn('Skipped publishing. You can publish manually in GTM.');
   }
