@@ -175,15 +175,17 @@ export class ConsentService {
   }
 
   private injectGtmScript(): void {
+    const win = this.document.defaultView as (Window & { dataLayer?: unknown[] }) | null;
     const head = this.document.head;
-    if (!head) return;
+    if (!win || !head) return;
 
     const script = this.document.createElement('script');
     script.async = true;
     script.src = `https://www.googletagmanager.com/gtm.js?id=${this.config.gtmId}`;
 
-    // Also push the gtm.start event
-    this.gtag({
+    // Push gtm.start directly (not through gtag — it must be a plain object)
+    win.dataLayer = win.dataLayer || [];
+    win.dataLayer.push({
       'gtm.start': new Date().getTime(),
       event: 'gtm.js',
     });
