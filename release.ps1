@@ -67,7 +67,9 @@ Write-Host "New version:     $newVersion" -ForegroundColor Green
 
 # Update package.json
 $pkg.version = $newVersion
-$pkg | ConvertTo-Json -Depth 10 | Set-Content $packageJson -Encoding utf8NoBOM
+# Write UTF-8 without BOM (compatible with PS 5.x)
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText($packageJson, ($pkg | ConvertTo-Json -Depth 10), $utf8NoBom)
 
 # Commit and push
 git add $packageJson
