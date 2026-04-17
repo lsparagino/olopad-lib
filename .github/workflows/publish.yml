@@ -12,6 +12,10 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    env:
+      # OIDC takes priority when trusted publishing is configured on npmjs.com.
+      # NPM_TOKEN secret is used as fallback until OIDC is set up.
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -20,6 +24,9 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
+
+      - name: Upgrade npm for OIDC support
+        run: npm install -g npm@11
 
       - name: Install dependencies
         run: npm ci
