@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.angular/
+
+# Setup script secrets
+packages/consent-setup/client_secret.json
+packages/consent-setup/oauth_token.json

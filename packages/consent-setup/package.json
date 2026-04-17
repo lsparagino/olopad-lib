@@ -1,0 +1,16 @@
+{
+  "name": "@olopad/consent-setup",
+  "version": "0.0.1",
+  "description": "CLI tool to automate GTM + GA4 setup with Google Consent Mode v2",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "consent-setup": "./bin/setup-gtm.mjs"
+  },
+  "files": ["bin"],
+  "dependencies": {
+    "@google-analytics/admin": "^5.0.0",
+    "googleapis": "^148.0.0",
+    "open": "^10.0.0"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@olopad/ngx-consent",
+  "version": "0.0.1",
+  "description": "Angular GDPR cookie consent with Google Tag Manager & Consent Mode v2",
+  "license": "MIT",
+  "peerDependencies": {
+    "@angular/core": "^19.0.0 || ^20.0.0 || ^21.0.0",
+    "@angular/common": "^19.0.0 || ^20.0.0 || ^21.0.0"
+  },
+  "devDependencies": {
+    "@angular/compiler": "^21.2.0",
+    "@angular/compiler-cli": "^21.2.0",
+    "@angular/core": "^21.2.0",
+    "@angular/common": "^21.2.0",
+    "@angular/platform-browser": "^21.2.0",
+    "ng-packagr": "^21.0.0",
+    "typescript": "~5.9.2"
+  },
+  "scripts": {
+    "build": "ng-packagr -p ng-package.json"
+  }
+}

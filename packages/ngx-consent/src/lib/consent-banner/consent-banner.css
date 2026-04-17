@@ -1,0 +1,327 @@
+/*
+ * @olopad/ngx-consent — Consent Banner Styles
+ *
+ * CSS Custom Properties (override these in your app to customize):
+ *
+ *   --olopad-consent-primary          Primary accent color (default: #00FFCC)
+ *   --olopad-consent-primary-light    Primary hover color (default: #66FFE0)
+ *   --olopad-consent-bg               Banner background color (default: #0A0A0F)
+ *   --olopad-consent-bg-secondary     Card/item background (default: rgba(255,255,255,0.02))
+ *   --olopad-consent-text             Primary text color (default: #E8E8ED)
+ *   --olopad-consent-text-secondary   Secondary text color (default: #A0A0B0)
+ *   --olopad-consent-text-muted       Muted/description text (default: #707080)
+ *   --olopad-consent-border           Border color (default: #2A2A35)
+ *   --olopad-consent-border-hover     Border hover color (default: #3A3A48)
+ *   --olopad-consent-surface          Surface/toggle background (default: #1E1E28)
+ *   --olopad-consent-font-heading     Heading font family (default: system-ui, sans-serif)
+ *   --olopad-consent-radius           Banner border radius (default: 20px)
+ */
+
+:host {
+  /* OloPad default theme */
+  --olopad-consent-primary: #00FFCC;
+  --olopad-consent-primary-light: #66FFE0;
+  --olopad-consent-bg: #0A0A0F;
+  --olopad-consent-bg-secondary: rgba(255, 255, 255, 0.02);
+  --olopad-consent-text: #E8E8ED;
+  --olopad-consent-text-secondary: #A0A0B0;
+  --olopad-consent-text-muted: #707080;
+  --olopad-consent-border: #2A2A35;
+  --olopad-consent-border-hover: #3A3A48;
+  --olopad-consent-surface: #1E1E28;
+  --olopad-consent-font-heading: system-ui, -apple-system, sans-serif;
+  --olopad-consent-radius: 20px;
+}
+
+/* Overlay */
+.consent-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+}
+
+/* Banner card */
+.consent-banner {
+  width: 100%;
+  max-width: 640px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--olopad-consent-bg) 97%, white),
+    var(--olopad-consent-bg) 98%
+  );
+  border: 1px solid var(--olopad-consent-border);
+  border-radius: var(--olopad-consent-radius);
+  padding: 2rem;
+  backdrop-filter: blur(20px);
+  box-shadow:
+    0 -4px 40px rgba(0, 0, 0, 0.5),
+    0 0 80px rgba(0, 255, 204, 0.05);
+  animation: olopadConsentSlideUp 350ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes olopadConsentSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Header */
+.banner-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.banner-logo {
+  height: 24px;
+  width: auto;
+  object-fit: contain;
+}
+
+.banner-title {
+  font-family: var(--olopad-consent-font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--olopad-consent-text);
+  margin: 0;
+}
+
+/* Text */
+.banner-text {
+  color: var(--olopad-consent-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  margin: 0 0 1.5rem;
+}
+
+.privacy-link {
+  color: var(--olopad-consent-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.privacy-link:hover {
+  color: var(--olopad-consent-primary-light);
+}
+
+/* Actions */
+.banner-actions {
+  display: flex;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}
+
+/* Self-contained button styles (no dependency on host app classes) */
+.consent-btn {
+  flex: 1;
+  min-width: 120px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+.consent-btn--primary {
+  background: var(--olopad-consent-primary);
+  color: var(--olopad-consent-bg);
+  border-color: var(--olopad-consent-primary);
+}
+
+.consent-btn--primary:hover {
+  background: var(--olopad-consent-primary-light);
+  border-color: var(--olopad-consent-primary-light);
+}
+
+.consent-btn--outline {
+  background: transparent;
+  color: var(--olopad-consent-primary);
+  border-color: var(--olopad-consent-primary);
+}
+
+.consent-btn--outline:hover {
+  background: rgba(0, 255, 204, 0.08);
+  color: var(--olopad-consent-primary-light);
+  border-color: var(--olopad-consent-primary-light);
+}
+
+.consent-btn--ghost {
+  background: transparent;
+  color: var(--olopad-consent-text-secondary);
+  border-color: var(--olopad-consent-border);
+}
+
+.consent-btn--ghost:hover {
+  color: var(--olopad-consent-text);
+  border-color: var(--olopad-consent-border-hover);
+  background: var(--olopad-consent-bg-secondary);
+}
+
+/* Categories list (customize view) */
+.categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.category-item {
+  padding: 1rem 1.25rem;
+  background: var(--olopad-consent-bg-secondary);
+  border: 1px solid var(--olopad-consent-border);
+  border-radius: 12px;
+  transition: border-color 0.2s ease;
+}
+
+.category-item:hover {
+  border-color: var(--olopad-consent-border-hover);
+}
+
+.category-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.category-label {
+  flex: 1;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.category-name {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--olopad-consent-text);
+}
+
+.category-desc {
+  font-size: 0.8125rem;
+  color: var(--olopad-consent-text-muted);
+  line-height: 1.5;
+}
+
+/* Toggle switch */
+.toggle-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.always-on-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--olopad-consent-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.toggle.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--olopad-consent-surface);
+  border-radius: 24px;
+  transition: all 0.3s ease;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: var(--olopad-consent-text);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.toggle input:checked + .toggle-slider {
+  background: var(--olopad-consent-primary);
+}
+
+.toggle input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+  background: var(--olopad-consent-bg);
+}
+
+.toggle input:focus-visible + .toggle-slider {
+  outline: 2px solid var(--olopad-consent-primary);
+  outline-offset: 2px;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .consent-overlay {
+    padding: 0.5rem;
+  }
+
+  .consent-banner {
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
+
+  .banner-actions {
+    flex-direction: column;
+  }
+
+  .consent-btn {
+    min-width: unset;
+  }
+
+  .category-header {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .toggle-wrapper {
+    align-self: flex-end;
+  }
+}
