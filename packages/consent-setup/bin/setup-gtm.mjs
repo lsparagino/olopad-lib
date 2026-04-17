@@ -343,6 +343,12 @@ async function setupGTM(auth, measurementId) {
       ],
       consentSettings: {
         consentStatus: 'needed',
+        consentType: {
+          type: 'list',
+          list: [
+            { type: 'template', value: 'analytics_storage' },
+          ],
+        },
       },
       firingTriggerId: [initTriggerId],
     },

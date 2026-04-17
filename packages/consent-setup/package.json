@@ -5,9 +5,11 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "consent-setup": "./bin/setup-gtm.mjs"
+    "consent-setup": "bin/setup-gtm.mjs"
   },
-  "files": ["bin"],
+  "files": [
+    "bin"
+  ],
   "dependencies": {
     "@google-analytics/admin": "^5.0.0",
     "googleapis": "^148.0.0",
