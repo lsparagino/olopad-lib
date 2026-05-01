@@ -1,6 +1,6 @@
 {
   "name": "@olopad/style",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "OloPad design system: CSS tokens, base styles, animations, brand assets, and webmanifest template",
   "license": "MIT",
   "repository": {
