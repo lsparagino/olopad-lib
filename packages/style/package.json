@@ -1,0 +1,40 @@
+{
+  "name": "@olopad/style",
+  "version": "0.0.1",
+  "description": "OloPad design system: CSS tokens, base styles, animations, brand assets, and webmanifest template",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lsparagino/olopad-lib",
+    "directory": "packages/style"
+  },
+  "keywords": [
+    "olopad",
+    "design-system",
+    "css",
+    "tokens",
+    "tailwind",
+    "theme"
+  ],
+  "files": [
+    "*.css",
+    "assets",
+    "manifest.template.json",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./index.css",
+    "./tailwind": "./index.tailwind.css",
+    "./tokens": "./tokens.css",
+    "./tokens.tailwind": "./tokens.tailwind.css",
+    "./fonts": "./fonts.css",
+    "./base": "./base.css",
+    "./animations": "./animations.css",
+    "./manifest.template.json": "./manifest.template.json",
+    "./assets/*": "./assets/*",
+    "./package.json": "./package.json"
+  },
+  "sideEffects": [
+    "*.css"
+  ]
+}

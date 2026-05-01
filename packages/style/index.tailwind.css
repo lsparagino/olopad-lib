@@ -1,0 +1,17 @@
+/*
+ * @olopad/style — Tailwind v4 bundle.
+ *
+ * Import this AFTER `@import 'tailwindcss';` so the `@theme` block is honored
+ * and Tailwind generates utilities (bg-primary, text-text-secondary, etc.):
+ *
+ *   @import url("https://fonts.googleapis.com/css2?...");  // or use ./fonts.css
+ *   @import 'tailwindcss';
+ *   @import '@olopad/style/tailwind';
+ *
+ * For non-Tailwind projects use `@olopad/style` (vanilla bundle).
+ */
+
+@import './fonts.css';
+@import './tokens.tailwind.css';
+@import './base.css';
+@import './animations.css';

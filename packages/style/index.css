@@ -1,0 +1,15 @@
+/*
+ * @olopad/style — vanilla bundle.
+ *
+ * One-line import for non-Tailwind projects:
+ *
+ *   @import '@olopad/style';
+ *
+ * For Tailwind v4 projects use `@olopad/style/tailwind` instead so
+ * tokens are registered via `@theme` and Tailwind generates utilities.
+ */
+
+@import './fonts.css';
+@import './tokens.css';
+@import './base.css';
+@import './animations.css';

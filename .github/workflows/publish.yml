@@ -67,3 +67,14 @@ jobs:
           else
             echo "Skipping @olopad/consent-setup — $LOCAL already published"
           fi
+
+      - name: Publish @olopad/style
+        run: |
+          LOCAL=$(node -p "require('./packages/style/package.json').version")
+          REMOTE=$(npm view @olopad/style version 2>/dev/null || echo "0.0.0")
+          if [ "$LOCAL" != "$REMOTE" ]; then
+            echo "Publishing @olopad/style@$LOCAL (npm has $REMOTE)"
+            npm publish --access public -w packages/style
+          else
+            echo "Skipping @olopad/style — $LOCAL already published"
+          fi

@@ -9,6 +9,7 @@ Reusable npm packages for the OloPad ecosystem.
 | [`@olopad/ngx-consent`](./packages/ngx-consent/) | Angular GDPR cookie consent with GTM & Google Consent Mode v2 |
 | [`@olopad/cdk-cognito-branding`](./packages/cdk-cognito-branding/) | AWS CDK construct for Cognito managed login branding |
 | [`@olopad/consent-setup`](./packages/consent-setup/) | CLI tool to automate GTM + GA4 setup with Consent Mode v2 |
+| [`@olopad/style`](./packages/style/) | OloPad design system: CSS tokens, base styles, animations, brand assets, webmanifest template |
 
 ## Development
 

@@ -1,0 +1,65 @@
+/*
+ * OloPad animation kit — keyframes + ready-to-use utility classes.
+ *
+ * Utilities:
+ *   .animate-fade-in    — gentle 8px slide + fade
+ *   .animate-slide-up   — 20px slide + fade (cards, sheets entering)
+ *   .animate-scale-in   — subtle 0.95 → 1 pop
+ *   .stagger-1 .. .stagger-12 — apply to siblings to step animation-delay
+ *
+ * Keyframes available for custom use: fadeIn, slideUp, scaleIn, slideUpSheet,
+ * slideInLeft, pulse-glow, spin. All easing comes from --ease-smooth /
+ * --ease-bounce in `tokens.css`.
+ */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideUpSheet {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px var(--color-primary-glow); }
+  50%      { box-shadow: 0 0 40px var(--color-primary-glow); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.animate-fade-in  { animation: fadeIn  0.4s var(--ease-smooth) both; }
+.animate-slide-up { animation: slideUp 0.4s var(--ease-smooth) both; }
+.animate-scale-in { animation: scaleIn 0.3s var(--ease-smooth) both; }
+
+.stagger-1  { animation-delay:  40ms; }
+.stagger-2  { animation-delay:  80ms; }
+.stagger-3  { animation-delay: 120ms; }
+.stagger-4  { animation-delay: 160ms; }
+.stagger-5  { animation-delay: 200ms; }
+.stagger-6  { animation-delay: 240ms; }
+.stagger-7  { animation-delay: 280ms; }
+.stagger-8  { animation-delay: 320ms; }
+.stagger-9  { animation-delay: 360ms; }
+.stagger-10 { animation-delay: 400ms; }
+.stagger-11 { animation-delay: 440ms; }
+.stagger-12 { animation-delay: 480ms; }

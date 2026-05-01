@@ -22,7 +22,7 @@
 
 param(
   [Parameter(Mandatory, Position = 0)]
-  [ValidateSet('ngx-consent', 'cdk-cognito-branding', 'consent-setup')]
+  [ValidateSet('ngx-consent', 'cdk-cognito-branding', 'consent-setup', 'style')]
   [string]$Package,
 
   [Parameter(Position = 1)]
@@ -73,7 +73,7 @@ npm version $newVersion --no-git-tag-version | Out-Null
 Pop-Location
 
 # Commit and push
-git add $packageJson
+git add $packageJson (Join-Path $PSScriptRoot "package-lock.json")
 git commit -m "release(@olopad/$Package): v$newVersion"
 git push origin main
 
