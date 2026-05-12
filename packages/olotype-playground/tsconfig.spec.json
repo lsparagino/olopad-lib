@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist/out-tsc/spec",
+    "types": ["vitest/globals"]
+  },
+  // The Analog vite-plugin-angular discovers files to compile from this
+  // tsconfig's `include`. The spec depends on the @olopad/olotype library
+  // (resolved via the path alias in the root tsconfig.json), so its sources
+  // must be in scope too — otherwise their @Component decorators are not
+  // transformed and inject() calls fail at runtime with NG0203.
+  "include": ["src/specs/**/*.ts", "../olotype/src/**/*.ts"]
+}
