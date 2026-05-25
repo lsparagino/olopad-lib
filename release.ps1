@@ -22,7 +22,7 @@
 
 param(
   [Parameter(Mandatory, Position = 0)]
-  [ValidateSet('ngx-consent', 'cdk-cognito-branding', 'consent-setup', 'style')]
+  [ValidateSet('ngx-consent', 'cdk-cognito-branding', 'consent-setup', 'style', 'olotype')]
   [string]$Package,
 
   [Parameter(Position = 1)]
