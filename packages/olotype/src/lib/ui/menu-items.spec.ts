@@ -29,12 +29,17 @@ function paragraphState(text = 'hello') {
 // ---- buildMenuRegistry ----------------------------------------------------
 
 describe('buildMenuRegistry', () => {
-  it('contains entries for every default toolbar id present in the schema', () => {
-    const registry = buildMenuRegistry(oloDefaultSchema);
+  it('contains entries for every default toolbar id present in the schema (with image uploader)', () => {
+    const registry = buildMenuRegistry(oloDefaultSchema, { onUploadImage: () => {} });
     for (const id of DEFAULT_TOOLBAR_ITEMS) {
       if (id === '|') continue;
       expect(registry.has(id), `registry missing "${id}"`).toBe(true);
     }
+  });
+
+  it('omits the image item when no onUploadImage is provided', () => {
+    const registry = buildMenuRegistry(oloDefaultSchema);
+    expect(registry.has('image')).toBe(false);
   });
 
   it('returns a separator entry under the "|" id', () => {
@@ -72,7 +77,9 @@ describe('buildMenuRegistry', () => {
 // ---- resolveMenuItems -----------------------------------------------------
 
 describe('resolveMenuItems', () => {
-  const registry = buildMenuRegistry(oloDefaultSchema);
+  // Build with onUploadImage so the image item is present — the toolbar
+  // default list includes 'image'.
+  const registry = buildMenuRegistry(oloDefaultSchema, { onUploadImage: () => {} });
 
   it('returns matching registry items in the order requested', () => {
     const out = resolveMenuItems(registry, ['bold', 'italic']);

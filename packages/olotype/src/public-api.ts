@@ -12,13 +12,14 @@ export type {
   OloTypeHandle,
   OloImageUploader,
   OloUploadedImage,
+  OloImageUploadError,
   OloSlashMenuItem,
   OloSlashMenuContext,
 } from './lib/core/types';
 export { OLO_DOC_SCHEMA_VERSION } from './lib/core/types';
 
 // Schema + serialization (advanced use)
-export { oloDefaultSchema, sanitizeUrl } from './lib/core/schema';
+export { oloDefaultSchema, sanitizeUrl, sanitizeImageSrc } from './lib/core/schema';
 export { buildSchema } from './lib/core/extensions';
 export {
   emptyDoc,
@@ -52,3 +53,10 @@ export {
   type OloNodeViewContext,
 } from './lib/node-view/node-view-context';
 export { OloNodeViewBridge } from './lib/node-view/angular-node-view';
+
+// Image upload (advanced: hosts that want their own entry point)
+export {
+  beginUpload,
+  openImagePicker,
+  pendingUploadCount,
+} from './lib/ui/image-upload/image-upload.plugin';

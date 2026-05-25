@@ -11,7 +11,12 @@ import type { EditorView } from 'prosemirror-view';
 export interface OloMenuItem {
   /** Stable id. Built-in ids: see {@link OLO_MENU_ITEM_IDS}. `|` renders a separator. */
   readonly id: string;
-  /** `button` (default) renders a clickable icon. `separator` renders a divider. `link` opens the link editor (bubble menu only). */
+  /**
+   * Item kind:
+   * - `button` (default): runs `run` on click.
+   * - `separator`: renders a divider.
+   * - `link`: opens the inline link editor (bubble menu only).
+   */
   readonly kind?: 'button' | 'separator' | 'link';
   readonly title?: string;
   readonly iconKey?: string;
@@ -41,6 +46,7 @@ export const OLO_MENU_ITEM_IDS = [
   'ordered-list',
   'blockquote',
   'code-block',
+  'image',
 ] as const;
 
 export type OloMenuItemId = (typeof OLO_MENU_ITEM_IDS)[number];
@@ -62,6 +68,8 @@ export const DEFAULT_TOOLBAR_ITEMS: readonly OloMenuItemId[] = [
   'ordered-list',
   'blockquote',
   'code-block',
+  '|',
+  'image',
 ];
 
 export const DEFAULT_BUBBLE_MENU_ITEMS: readonly OloMenuItemId[] = [
@@ -173,11 +181,25 @@ function makeWrapItem(
   };
 }
 
+/** Options for {@link buildMenuRegistry}. */
+export interface OloMenuRegistryOptions {
+  /**
+   * If provided, the `image` item appears in the registry and runs this
+   * callback on click. The callback typically opens a file picker and
+   * forwards the chosen file through the configured `uploadImage` host
+   * function. When omitted, the `image` id is silently dropped.
+   */
+  readonly onUploadImage?: (view: EditorView) => void;
+}
+
 /**
  * Build the registry of built-in menu items against a given schema. Items for
  * marks/nodes the schema doesn't include are simply omitted.
  */
-export function buildMenuRegistry(schema: Schema): ReadonlyMap<string, OloMenuItem> {
+export function buildMenuRegistry(
+  schema: Schema,
+  options?: OloMenuRegistryOptions,
+): ReadonlyMap<string, OloMenuItem> {
   const candidates: (OloMenuItem | null)[] = [
     SEPARATOR,
     makeMarkItem(schema, 'bold', 'bold', { title: 'Bold', iconKey: 'bold', shortcut: 'Cmd+B' }),
@@ -232,6 +254,15 @@ export function buildMenuRegistry(schema: Schema): ReadonlyMap<string, OloMenuIt
       title: 'Code block',
       iconKey: 'code-block',
     }),
+    options?.onUploadImage && schema.nodes['image']
+      ? {
+          id: 'image',
+          kind: 'button',
+          title: 'Image',
+          iconKey: 'image',
+          run: options.onUploadImage,
+        }
+      : null,
   ];
 
   const map = new Map<string, OloMenuItem>();

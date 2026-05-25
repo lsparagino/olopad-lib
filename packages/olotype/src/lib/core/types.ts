@@ -118,12 +118,24 @@ export interface OloTypeHandle {
   runCommand(command: Command): boolean;
 }
 
-/** Optional image uploader contract used by the image extension. */
-export type OloImageUploader = (file: File) => Promise<OloUploadedImage>;
+/**
+ * Host-provided image uploader. The library never decides where images live —
+ * the host returns a final URL (and optional dimensions/alt) for a given
+ * `File`. The `AbortSignal` fires when the placeholder is removed before the
+ * upload resolves (undo, drag-handle delete, editor destroyed, etc.); honor
+ * it from the underlying `fetch` / SDK call.
+ */
+export type OloImageUploader = (file: File, signal: AbortSignal) => Promise<OloUploadedImage>;
 
 export interface OloUploadedImage {
   readonly url: string;
   readonly width?: number;
   readonly height?: number;
   readonly alt?: string;
+}
+
+/** Payload emitted on the OloType `(uploadError)` output. */
+export interface OloImageUploadError {
+  readonly file: File;
+  readonly error: unknown;
 }

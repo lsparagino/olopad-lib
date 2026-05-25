@@ -1,8 +1,10 @@
+import { isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  PLATFORM_ID,
   effect,
   inject,
   input,
@@ -33,6 +35,7 @@ import type { OloBubbleMenuState } from './bubble-menu.plugin';
       <div
         #floater
         class="olo-bubble-menu"
+        [class.is-bottom-sheet]="isBottomSheet()"
         role="toolbar"
         aria-label="Text formatting"
         (mousedown)="$event.preventDefault()"
@@ -91,6 +94,7 @@ import type { OloBubbleMenuState } from './bubble-menu.plugin';
 })
 export class OloBubbleMenuComponent implements OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly platformId = inject(PLATFORM_ID);
 
   /** Plugin-emitted state. Drives visibility and position. */
   readonly state = input.required<OloBubbleMenuState>();
@@ -102,12 +106,26 @@ export class OloBubbleMenuComponent implements OnDestroy {
   protected readonly linkEditorOpen = signal(false);
   protected readonly linkDraft = signal('');
 
+  /** True on touch devices — flips the menu into a sticky bottom sheet. */
+  protected readonly isBottomSheet = signal(false);
+
   private readonly floater = viewChild<ElementRef<HTMLDivElement>>('floater');
   private readonly linkInput = viewChild<ElementRef<HTMLInputElement>>('linkInput');
   private cleanup: (() => void) | null = null;
+  private mql: MediaQueryList | null = null;
+  private mqlChange: (() => void) | null = null;
   private readonly iconCache = new Map<string, SafeHtml>();
 
   constructor() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.mql = window.matchMedia('(pointer: coarse)');
+      this.isBottomSheet.set(this.mql.matches);
+      const onChange = (e: MediaQueryListEvent) => this.isBottomSheet.set(e.matches);
+      this.mql.addEventListener('change', onChange);
+      // Capture for cleanup
+      this.mqlChange = () => this.mql?.removeEventListener('change', onChange);
+    }
+
     effect(() => {
       const s = this.state();
       const floaterEl = this.floater()?.nativeElement;
@@ -134,6 +152,8 @@ export class OloBubbleMenuComponent implements OnDestroy {
   ngOnDestroy(): void {
     this.cleanup?.();
     this.cleanup = null;
+    this.mqlChange?.();
+    this.mqlChange = null;
   }
 
   protected iconFor(key = ''): SafeHtml {
@@ -206,6 +226,15 @@ export class OloBubbleMenuComponent implements OnDestroy {
     this.cleanup = null;
 
     if (!s.visible || !s.rect || !floater) return;
+
+    // Bottom-sheet mode: CSS owns positioning. Clear any inline styles left
+    // over from a prior fine-pointer render.
+    if (this.isBottomSheet()) {
+      floater.style.position = '';
+      floater.style.left = '';
+      floater.style.top = '';
+      return;
+    }
 
     const virtual: VirtualElement = {
       getBoundingClientRect: () => {

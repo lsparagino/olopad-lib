@@ -21,6 +21,7 @@ import {
 } from '@angular/core';
 import type { Node as PmNode } from 'prosemirror-model';
 import { dropCursor } from 'prosemirror-dropcursor';
+import { gapCursor } from 'prosemirror-gapcursor';
 import { EditorState, type Command } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
@@ -31,6 +32,8 @@ import { emptyDoc, parseDoc, serializeDoc } from '../core/serialize';
 import type {
   OloDoc,
   OloExtension,
+  OloImageUploadError,
+  OloImageUploader,
   OloSlashMenuItem,
   OloTypeHandle,
 } from '../core/types';
@@ -52,6 +55,7 @@ import { OloSlashMenuComponent } from '../ui/slash-menu/slash-menu.component';
 import { OLO_DEFAULT_SLASH_ITEMS } from '../ui/slash-menu/default-items';
 import { OloToolbarComponent } from '../ui/toolbar/toolbar.component';
 import { viewTickPlugin } from '../ui/view-tick.plugin';
+import { imageUploadPlugin, openImagePicker } from '../ui/image-upload/image-upload.plugin';
 import { OloNodeViewBridge } from '../node-view/angular-node-view';
 import {
   DEFAULT_BUBBLE_MENU_ITEMS,
@@ -167,6 +171,19 @@ export class OloTypeComponent implements OnDestroy, OloTypeHandle {
   readonly blockHandle = input<boolean>(true);
 
   /**
+   * Host-provided image uploader. When set, the editor intercepts paste and
+   * drag-drop of image files: it renders an in-flight placeholder at the drop
+   * position and calls this function with the file plus an `AbortSignal` that
+   * fires if the placeholder is removed before resolution. On resolve, the
+   * returned URL replaces the placeholder. When `null`/`undefined`, image
+   * pastes and drops are ignored.
+   */
+  readonly uploadImage = input<OloImageUploader | null>(null);
+
+  /** Fires when an upload rejects (other than via AbortSignal). */
+  readonly uploadError = output<OloImageUploadError>();
+
+  /**
    * Items shown in the toolbar. Mix built-in ids (e.g. `'bold'`, `'heading-1'`,
    * `'|'` for separators) and full `OloMenuItem` objects. Defaults to a
    * standard set; pass `[]` to render an empty toolbar.
@@ -197,7 +214,11 @@ export class OloTypeComponent implements OnDestroy, OloTypeHandle {
 
   private readonly schema = computed(() => buildSchema(this.extensions()));
 
-  private readonly menuRegistry = computed(() => buildMenuRegistry(this.schema()));
+  private readonly menuRegistry = computed(() =>
+    buildMenuRegistry(this.schema(), {
+      onUploadImage: this.uploadImage() ? view => this.runImagePicker(view) : undefined,
+    }),
+  );
 
   protected readonly resolvedToolbarItems = computed(() =>
     resolveMenuItems(this.menuRegistry(), this.toolbarItems()),
@@ -207,11 +228,44 @@ export class OloTypeComponent implements OnDestroy, OloTypeHandle {
     resolveMenuItems(this.menuRegistry(), this.bubbleMenuItems()),
   );
 
-  /** Merged slash-menu item list: built-ins first, then extension-contributed items. */
+  /**
+   * Merged slash-menu items: built-ins, optional image entry (when an uploader
+   * is wired), then extension-contributed items.
+   */
   protected readonly effectiveSlashItems = computed<readonly OloSlashMenuItem[]>(() => {
     const fromExtensions = this.extensions().flatMap(ext => ext.slashMenuItems ?? []);
-    return [...OLO_DEFAULT_SLASH_ITEMS, ...fromExtensions];
+    const hasUploader = !!this.uploadImage();
+    const imageItem: OloSlashMenuItem | null = hasUploader
+      ? {
+          id: 'image',
+          title: 'Image',
+          description: 'Upload an image from your device',
+          keywords: ['picture', 'photo', 'img', 'upload'],
+          icon: 'image',
+          onSelect: ({ view, range }) => {
+            // Remove the `/image` query text, then open the picker at the
+            // resulting cursor position.
+            view.dispatch(view.state.tr.delete(range.from, range.to));
+            this.runImagePicker(view);
+          },
+        }
+      : null;
+    return [
+      ...OLO_DEFAULT_SLASH_ITEMS,
+      ...(imageItem ? [imageItem] : []),
+      ...fromExtensions,
+    ];
   });
+
+  /** Open the system file picker and stream the result through the upload pipeline. */
+  private runImagePicker(view: EditorView): void {
+    const uploader = this.uploadImage();
+    if (!uploader) return;
+    openImagePicker(view, {
+      uploader,
+      onError: event => this.uploadError.emit(event),
+    });
+  }
 
   constructor() {
     // Build / rebuild the view when schema or readOnly changes. Placeholder
@@ -300,7 +354,12 @@ export class OloTypeComponent implements OnDestroy, OloTypeHandle {
         state => this.blockHandleState.set(state),
         () => this.blockHandle() && !this.readOnly(),
       ),
+      imageUploadPlugin(() => ({
+        uploader: this.uploadImage(),
+        onError: event => this.uploadError.emit(event),
+      })),
       dropCursor({ color: 'var(--olo-type-accent, #2563eb)', width: 2 }),
+      gapCursor(),
       viewTickPlugin(() => this.viewTick.update(n => n + 1)),
       changeReporterPlugin(view => this.emitChange(view)),
     ];

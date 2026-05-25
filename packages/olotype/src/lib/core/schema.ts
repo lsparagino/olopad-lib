@@ -4,15 +4,40 @@ import { addListNodes } from 'prosemirror-schema-list';
 /** Reject URL schemes that are dangerous in `href` / `src` contexts. */
 const DISALLOWED_URL_PROTOCOLS = /^(?:javascript|vbscript|data):/i;
 
+/** Reject URL schemes that can execute script when used as an image src. */
+const DISALLOWED_IMAGE_SRC_PROTOCOLS = /^(?:javascript|vbscript):/i;
+
 /**
  * Return the url unchanged if it is safe; otherwise null. Used for both
  * `link.href` and `image.src` parsing to neutralize XSS via pasted content.
+ *
+ * Strict policy: rejects `javascript:`, `vbscript:`, AND `data:`. The `data:`
+ * rejection is paste-time defense — pasted HTML could carry data URLs that
+ * encode hostile content as links.
  */
 export function sanitizeUrl(url: string | null | undefined): string | null {
   if (!url) return null;
   const trimmed = url.trim();
   if (!trimmed) return null;
   if (DISALLOWED_URL_PROTOCOLS.test(trimmed)) return null;
+  return trimmed;
+}
+
+/**
+ * Relaxed URL sanitizer for image sources that come from a *trusted* origin
+ * (a host-provided uploader, programmatic node insertion, etc.). Rejects
+ * only the schemes that can execute script when set as `<img src>` —
+ * `javascript:` and `vbscript:`. Allows `data:`, `blob:`, `http(s):`, and
+ * relative URLs since none of those execute when consumed by `<img>`.
+ *
+ * Use {@link sanitizeUrl} for paste-time validation; use this for values
+ * returned by host code you trust.
+ */
+export function sanitizeImageSrc(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  if (DISALLOWED_IMAGE_SRC_PROTOCOLS.test(trimmed)) return null;
   return trimmed;
 }
 
@@ -75,7 +100,10 @@ const image: NodeSpec = {
     {
       tag: 'img[src]',
       getAttrs: (dom: HTMLElement) => {
-        const safeSrc = sanitizeUrl(dom.getAttribute('src'));
+        // Image srcs use the relaxed sanitizer: data:/blob:/http(s) are all
+        // safe in `<img>` (no script execution). Only javascript:/vbscript:
+        // get rejected.
+        const safeSrc = sanitizeImageSrc(dom.getAttribute('src'));
         if (!safeSrc) return false; // PM rejects this match
         return {
           src: safeSrc,
@@ -89,7 +117,7 @@ const image: NodeSpec = {
   ],
   toDOM: (node): DOMOutputSpec => {
     const { src, alt, title, width, height } = node.attrs;
-    const safeSrc = sanitizeUrl(src as string) ?? '';
+    const safeSrc = sanitizeImageSrc(src as string) ?? '';
     return [
       'img',
       {

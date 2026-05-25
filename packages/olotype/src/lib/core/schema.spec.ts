@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DOMSerializer } from 'prosemirror-model';
-import { oloDefaultSchema, sanitizeUrl } from './schema';
+import { oloDefaultSchema, sanitizeImageSrc, sanitizeUrl } from './schema';
 
 describe('sanitizeUrl', () => {
   it('returns plain http and https urls unchanged', () => {
@@ -37,6 +37,30 @@ describe('sanitizeUrl', () => {
 
   it.each([null, undefined, '', '   '])('returns null for empty input %s', (value) => {
     expect(sanitizeUrl(value as string | null | undefined)).toBeNull();
+  });
+});
+
+describe('sanitizeImageSrc', () => {
+  it('allows data: URLs (safe in <img src>; useful for uploader returns)', () => {
+    const url = 'data:image/png;base64,iVBORw0KGgo=';
+    expect(sanitizeImageSrc(url)).toBe(url);
+  });
+
+  it('allows blob: URLs', () => {
+    expect(sanitizeImageSrc('blob:http://localhost/abc')).toBe('blob:http://localhost/abc');
+  });
+
+  it('allows http(s) and relative URLs', () => {
+    expect(sanitizeImageSrc('https://cdn.example.com/a.png')).toBe('https://cdn.example.com/a.png');
+    expect(sanitizeImageSrc('/img/a.png')).toBe('/img/a.png');
+  });
+
+  it.each(['javascript:alert(1)', 'VBScript:foo'])('rejects script-executable scheme %s', (url) => {
+    expect(sanitizeImageSrc(url)).toBeNull();
+  });
+
+  it.each([null, undefined, '', '   '])('returns null for empty input %s', (value) => {
+    expect(sanitizeImageSrc(value as string | null | undefined)).toBeNull();
   });
 });
 
@@ -78,6 +102,13 @@ describe('oloDefaultSchema', () => {
     const node = oloDefaultSchema.nodes['image'].create({ src: 'javascript:alert(1)' });
     const out = DOMSerializer.fromSchema(oloDefaultSchema).serializeNode(node) as HTMLElement;
     expect(out.getAttribute('src')).toBe('');
+  });
+
+  it('renders an image node with a data: src verbatim (relaxed sanitizer)', () => {
+    const dataUrl = 'data:image/png;base64,iVBORw0KGgo=';
+    const node = oloDefaultSchema.nodes['image'].create({ src: dataUrl });
+    const out = DOMSerializer.fromSchema(oloDefaultSchema).serializeNode(node) as HTMLElement;
+    expect(out.getAttribute('src')).toBe(dataUrl);
   });
 
   it('marks external link mark output with target=_blank and rel=noopener', () => {

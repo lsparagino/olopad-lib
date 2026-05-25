@@ -54,6 +54,26 @@ import type { OloBlockHandleState } from './block-handle.plugin';
           role="menu"
           (mousedown)="$event.preventDefault()"
         >
+          <button
+            type="button"
+            class="olo-block-menu-item"
+            role="menuitem"
+            [disabled]="!canMoveUp() || null"
+            (click)="moveUp()"
+          >
+            <span class="olo-block-menu-icon" [innerHTML]="iconFor('heading1')"></span>
+            Move up
+          </button>
+          <button
+            type="button"
+            class="olo-block-menu-item"
+            role="menuitem"
+            [disabled]="!canMoveDown() || null"
+            (click)="moveDown()"
+          >
+            <span class="olo-block-menu-icon" [innerHTML]="iconFor('heading3')"></span>
+            Move down
+          </button>
           <button type="button" class="olo-block-menu-item" role="menuitem" (click)="duplicateBlock()">
             <span class="olo-block-menu-icon" [innerHTML]="iconFor('list')"></span>
             Duplicate
@@ -196,6 +216,92 @@ export class OloBlockHandleComponent implements OnDestroy {
     const node = view.state.doc.nodeAt(pos);
     if (!node) return;
     view.dispatch(view.state.tr.delete(pos, pos + node.nodeSize));
+    this.menuOpen.set(false);
+    view.focus();
+  }
+
+  /** True when there's a sibling block above the hovered block. */
+  protected canMoveUp(): boolean {
+    // Re-track state so the menu's disabled state stays accurate.
+    const pos = this.state().pos;
+    const view = this.view();
+    if (pos < 0) return false;
+    const $pos = view.state.doc.resolve(pos);
+    return $pos.index($pos.depth) > 0;
+  }
+
+  /** True when there's a sibling block below the hovered block. */
+  protected canMoveDown(): boolean {
+    const pos = this.state().pos;
+    const view = this.view();
+    if (pos < 0) return false;
+    const node = view.state.doc.nodeAt(pos);
+    if (!node) return false;
+    const $pos = view.state.doc.resolve(pos);
+    const parent = $pos.parent;
+    return $pos.index($pos.depth) < parent.childCount - 1;
+  }
+
+  protected moveUp(): void {
+    this.moveBy(-1);
+  }
+
+  protected moveDown(): void {
+    this.moveBy(+1);
+  }
+
+  /**
+   * Swap the hovered top-level block with its sibling. `direction` is -1 for
+   * up, +1 for down. We do the move as a delete + insert in a single
+   * transaction, which keeps history clean (one undo step per move).
+   */
+  private moveBy(direction: -1 | 1): void {
+    const view = this.view();
+    const pos = this.state().pos;
+    const node = view.state.doc.nodeAt(pos);
+    if (!node) return;
+    const $pos = view.state.doc.resolve(pos);
+    const parent = $pos.parent;
+    const index = $pos.index($pos.depth);
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= parent.childCount) return;
+
+    const sibling = parent.child(targetIndex);
+    const parentStart = $pos.before($pos.depth) + 1;
+
+    // Compute positions of both blocks within the parent.
+    let cursor = parentStart;
+    let aStart = -1;
+    let aEnd = -1;
+    let bStart = -1;
+    let bEnd = -1;
+    const [firstIdx, secondIdx] =
+      direction === -1 ? [targetIndex, index] : [index, targetIndex];
+    for (let i = 0; i < parent.childCount; i++) {
+      const child = parent.child(i);
+      if (i === firstIdx) {
+        aStart = cursor;
+        aEnd = cursor + child.nodeSize;
+      } else if (i === secondIdx) {
+        bStart = cursor;
+        bEnd = cursor + child.nodeSize;
+      }
+      cursor += child.nodeSize;
+    }
+    if (aStart < 0 || bStart < 0) return;
+
+    // Build a single transaction: delete the later block first (positions
+    // before it don't shift), then delete the earlier block, then insert
+    // them in swapped order at the earlier start.
+    const [firstNode, secondNode] =
+      direction === -1 ? [sibling, node] : [node, sibling];
+
+    const tr = view.state.tr
+      .delete(bStart, bEnd)
+      .delete(aStart, aEnd)
+      .insert(aStart, [secondNode, firstNode]);
+
+    view.dispatch(tr.scrollIntoView());
     this.menuOpen.set(false);
     view.focus();
   }

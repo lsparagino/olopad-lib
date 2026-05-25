@@ -106,6 +106,55 @@
   border-radius: 0.25rem;
 }
 
+/*
+ * NodeSelection highlight. ProseMirror adds this class automatically to the
+ * DOM of any node currently selected as a whole (clicking an image, etc.).
+ * Backspace / Delete on a NodeSelection removes the node — the outline is the
+ * user's cue that the selection is on the node, not on text.
+ */
+:where(.olo-type-editor) .ProseMirror-selectednode {
+  outline: 2px solid var(--olo-type-accent, #2563eb);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/*
+ * Gap cursor: a thin blinking caret rendered between block-level nodes where
+ * a regular text cursor can't sit (e.g. above an image at the very top of the
+ * document, between two images). Provided by `prosemirror-gapcursor`. The
+ * package ships its own stylesheet too; we re-declare the rules here so
+ * consumers don't have to import a second CSS file.
+ */
+:where(.olo-type-editor) .ProseMirror-gapcursor {
+  display: none;
+  pointer-events: none;
+  position: absolute;
+}
+
+:where(.olo-type-editor) .ProseMirror-gapcursor::after {
+  content: '';
+  display: block;
+  position: absolute;
+  top: -2px;
+  width: 20px;
+  border-top: 1px solid var(--olo-type-accent, #2563eb);
+  animation: olo-type-gapcursor-blink 1.1s steps(2, start) infinite;
+}
+
+:where(.olo-type-editor.ProseMirror-focused) .ProseMirror-gapcursor {
+  display: block;
+}
+
+@keyframes olo-type-gapcursor-blink {
+  to { visibility: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.olo-type-editor) .ProseMirror-gapcursor::after {
+    animation: none;
+  }
+}
+
 /* Placeholder: rendered as a node decoration with data-placeholder. */
 :where(.olo-type-editor) .olo-type-empty::before {
   content: attr(data-placeholder);
@@ -447,4 +496,114 @@
   width: 18px;
   height: 18px;
   color: var(--olo-type-muted, #6b7280);
+}
+
+/* ---- Image upload placeholder -------------------------------------------- */
+
+:where(.olo-image-uploading) {
+  display: inline-block;
+  position: relative;
+  max-width: 100%;
+  margin: 0.5rem 0;
+  border-radius: 0.25rem;
+  overflow: hidden;
+  vertical-align: top;
+  background: var(--olo-type-code-bg, #f3f4f6);
+}
+
+:where(.olo-image-uploading-preview) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  opacity: 0.55;
+  filter: blur(1px);
+}
+
+:where(.olo-image-uploading-spinner) {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: olo-image-upload-spin 0.8s linear infinite;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes olo-image-upload-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- Mobile bottom sheet ------------------------------------------------- */
+
+/*
+ * On touch devices the bubble menu sits at the viewport bottom — thumb-
+ * reachable and out of the way of selection handles. The component clears
+ * Floating UI's inline positioning when this class is present, so the
+ * `!important`-free rules below win.
+ */
+:where(.olo-bubble-menu.is-bottom-sheet) {
+  position: fixed;
+  inset: auto 0 0 0;
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 0;
+  border-radius: 0.75rem 0.75rem 0 0;
+  padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+:where(.olo-bubble-menu.is-bottom-sheet) .olo-bubble-btn {
+  width: 40px;
+  height: 40px;
+}
+
+:where(.olo-bubble-menu.is-bottom-sheet) .olo-bubble-link-editor input {
+  width: 100%;
+  min-width: 0;
+}
+
+/* ---- Focus-visible (a11y) ----------------------------------------------- */
+
+/*
+ * Every interactive button in our surfaces uses these tokens for the focus
+ * ring. We deliberately scope to `:focus-visible` so mouse clicks don't draw
+ * the ring — keyboard navigation still does.
+ */
+:where(
+  .olo-toolbar-btn,
+  .olo-bubble-btn,
+  .olo-bubble-link-apply,
+  .olo-bubble-link-remove,
+  .olo-slash-item,
+  .olo-block-handle,
+  .olo-block-menu-item
+):focus-visible {
+  outline: 2px solid var(--olo-type-accent, #2563eb);
+  outline-offset: 2px;
+}
+
+:where(.olo-bubble-link-editor) input:focus-visible {
+  outline: 2px solid var(--olo-type-accent, #60a5fa);
+  outline-offset: 1px;
+}
+
+/* ---- Reduced motion ----------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.olo-image-uploading-spinner) {
+    animation: none;
+    /* Solid ring + a fade-in dot so the loading state is still visible. */
+    border-top-color: rgba(255, 255, 255, 0.85);
+    opacity: 0.7;
+  }
+  :where(.olo-block-handle) {
+    transition: none;
+  }
 }

@@ -1,5 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
-import { OloTypeComponent, emptyDoc, type OloDoc } from '@olopad/olotype';
+import {
+  OloTypeComponent,
+  emptyDoc,
+  type OloDoc,
+  type OloImageUploadError,
+  type OloImageUploader,
+} from '@olopad/olotype';
 import { CalloutExtension } from './callout/callout.extension';
 
 @Component({
@@ -15,6 +21,8 @@ import { CalloutExtension } from './callout/callout.extension';
           Type below. Try <code>#&nbsp;</code> for H1, <code>-&nbsp;</code> for a bullet,
           <code>1.&nbsp;</code> for a numbered list, <code>&gt;&nbsp;</code> for a quote.
           <kbd>Cmd</kbd>+<kbd>B</kbd> bolds, <kbd>Cmd</kbd>+<kbd>Z</kbd> undoes.
+          Add an image with <code>/image</code>, the toolbar button, or by
+          dragging / pasting a file.
         </p>
       </header>
 
@@ -24,8 +32,10 @@ import { CalloutExtension } from './callout/callout.extension';
           [readOnly]="readOnly()"
           [toolbar]="toolbarOn()"
           [extensions]="extensions"
-          placeholder="Start writing…"
+          [uploadImage]="fakeUploader"
+          placeholder="Start writing… or drag in an image."
           (changed)="onChange($event)"
+          (uploadError)="onUploadError($event)"
         />
       </section>
 
@@ -48,6 +58,14 @@ import { CalloutExtension } from './callout/callout.extension';
         </header>
         <pre>{{ jsonPreview() }}</pre>
       </section>
+
+      @if (uploadErrorMessage(); as msg) {
+        <div class="upload-error" role="alert">
+          <strong>Image upload failed</strong>
+          <p>{{ msg }}</p>
+          <button type="button" (click)="dismissError()">Dismiss</button>
+        </div>
+      }
     </main>
   `,
   styles: [
@@ -113,11 +131,46 @@ import { CalloutExtension } from './callout/callout.extension';
         white-space: pre-wrap;
       }
 
+      .upload-error {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        max-width: 22rem;
+        padding: 0.75rem 1rem;
+        background: #fef2f2;
+        color: #7f1d1d;
+        border: 1px solid #fecaca;
+        border-radius: 0.5rem;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+        font-size: 0.875rem;
+      }
+      .upload-error strong { display: block; margin-bottom: 0.25rem; }
+      .upload-error p { margin: 0 0 0.5rem; word-break: break-word; }
+      .upload-error button {
+        font: inherit;
+        padding: 0.25rem 0.65rem;
+        border: 1px solid #fecaca;
+        background: #fff;
+        color: #7f1d1d;
+        border-radius: 0.375rem;
+        cursor: pointer;
+      }
+
       @media (prefers-color-scheme: dark) {
         .editor-card { background: #111827; border-color: #1f2937; }
         .subtitle, .stats { color: #94a3b8; }
         .controls button { background: #1f2937; border-color: #374151; color: inherit; }
         .controls button:hover { background: #374151; }
+        .upload-error {
+          background: #450a0a;
+          color: #fecaca;
+          border-color: #7f1d1d;
+        }
+        .upload-error button {
+          background: #1f2937;
+          border-color: #7f1d1d;
+          color: #fecaca;
+        }
       }
     `,
   ],
@@ -127,6 +180,7 @@ export class AppComponent {
   readonly readOnly = signal(false);
   readonly toolbarOn = signal(true);
   readonly extensions = [CalloutExtension];
+  readonly uploadErrorMessage = signal<string | null>(null);
 
   readonly jsonPreview = computed(() => JSON.stringify(this.doc(), null, 2));
   readonly stats = computed(() => {
@@ -136,6 +190,42 @@ export class AppComponent {
 
   onChange(_next: OloDoc): void {
     // The signal is the source of truth; this is just here to demo the output binding.
+  }
+
+  /**
+   * Demo uploader. Reads the file as a data URL via FileReader and resolves
+   * after a fake 800ms "network" delay so the in-flight placeholder is
+   * visible. A real host would PUT to a presigned URL and return the CDN URL.
+   * Honors AbortSignal so cancelling the placeholder mid-upload short-circuits.
+   */
+  readonly fakeUploader: OloImageUploader = (file, signal) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        const timer = setTimeout(() => {
+          resolve({ url: dataUrl, alt: file.name });
+        }, 800);
+        signal.addEventListener('abort', () => {
+          clearTimeout(timer);
+          reject(new DOMException('Aborted', 'AbortError'));
+        });
+      };
+      reader.onerror = () => reject(reader.error ?? new Error('FileReader failed'));
+      reader.readAsDataURL(file);
+    });
+
+  onUploadError(event: OloImageUploadError): void {
+    const err = event.error;
+    const detail =
+      err instanceof Error ? err.message : typeof err === 'string' ? err : 'Unknown error';
+    this.uploadErrorMessage.set(`${event.file.name}: ${detail}`);
+    // eslint-disable-next-line no-console
+    console.warn('Image upload failed:', event.file.name, event.error);
+  }
+
+  dismissError(): void {
+    this.uploadErrorMessage.set(null);
   }
 
   toggleReadOnly(): void {
