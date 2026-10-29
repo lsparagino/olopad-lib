@@ -1,44 +1,54 @@
 import { Schema, type DOMOutputSpec, type MarkSpec, type NodeSpec } from 'prosemirror-model';
 import { addListNodes } from 'prosemirror-schema-list';
 
-/** Reject URL schemes that are dangerous in `href` / `src` contexts. */
-const DISALLOWED_URL_PROTOCOLS = /^(?:javascript|vbscript|data):/i;
+/** URL schemes a link may use. Anything else (`javascript:`, `data:`, …) is dropped. */
+const ALLOWED_LINK_SCHEMES: ReadonlySet<string> = new Set(['http', 'https', 'mailto', 'tel']);
 
-/** Reject URL schemes that can execute script when used as an image src. */
-const DISALLOWED_IMAGE_SRC_PROTOCOLS = /^(?:javascript|vbscript):/i;
+/** URL schemes an image src may use; none of these execute inside `<img>`. */
+const ALLOWED_IMAGE_SCHEMES: ReadonlySet<string> = new Set(['http', 'https', 'data', 'blob']);
 
 /**
- * Return the url unchanged if it is safe; otherwise null. Used for both
- * `link.href` and `image.src` parsing to neutralize XSS via pasted content.
- *
- * Strict policy: rejects `javascript:`, `vbscript:`, AND `data:`. The `data:`
- * rejection is paste-time defense — pasted HTML could carry data URLs that
- * encode hostile content as links.
+ * The scheme the browser will resolve `url` with (lower-cased), or `null` for
+ * a relative URL. Mirrors the URL parser's preprocessing, which a regex on the
+ * raw string misses: leading C0 controls and spaces are stripped, and tab/LF/CR
+ * are removed anywhere — so `java\tscript:` and `\x01javascript:`
+ * both run as `javascript:`.
  */
-export function sanitizeUrl(url: string | null | undefined): string | null {
+function urlScheme(url: string): string | null {
+  const cleaned = url.replace(/^[\u0000- ]+/, '').replace(/[\t\n\r]/g, '');
+  const match = /^([a-z][a-z0-9+.-]*):/i.exec(cleaned);
+  return match ? match[1].toLowerCase() : null;
+}
+
+function sanitizeWith(url: string | null | undefined, allowed: ReadonlySet<string>): string | null {
   if (!url) return null;
   const trimmed = url.trim();
   if (!trimmed) return null;
-  if (DISALLOWED_URL_PROTOCOLS.test(trimmed)) return null;
+  const scheme = urlScheme(trimmed);
+  if (scheme !== null && !allowed.has(scheme)) return null;
   return trimmed;
 }
 
 /**
- * Relaxed URL sanitizer for image sources that come from a *trusted* origin
- * (a host-provided uploader, programmatic node insertion, etc.). Rejects
- * only the schemes that can execute script when set as `<img src>` —
- * `javascript:` and `vbscript:`. Allows `data:`, `blob:`, `http(s):`, and
- * relative URLs since none of those execute when consumed by `<img>`.
+ * Return the url (trimmed) if it is safe as a link `href`; otherwise null.
+ * Applied when parsing pasted HTML, when the user enters a link, and when a
+ * stored document is rendered — so a hostile stored `href` never reaches the DOM.
  *
- * Use {@link sanitizeUrl} for paste-time validation; use this for values
- * returned by host code you trust.
+ * Allowlist: `http:`, `https:`, `mailto:`, `tel:` and relative URLs.
+ */
+export function sanitizeUrl(url: string | null | undefined): string | null {
+  return sanitizeWith(url, ALLOWED_LINK_SCHEMES);
+}
+
+/**
+ * Relaxed URL sanitizer for image sources. Allows `http(s):`, `data:`,
+ * `blob:` and relative URLs, none of which execute when consumed by `<img>`;
+ * rejects every other scheme (`javascript:`, `vbscript:`, …).
+ *
+ * Use {@link sanitizeUrl} for link targets.
  */
 export function sanitizeImageSrc(url: string | null | undefined): string | null {
-  if (!url) return null;
-  const trimmed = url.trim();
-  if (!trimmed) return null;
-  if (DISALLOWED_IMAGE_SRC_PROTOCOLS.test(trimmed)) return null;
-  return trimmed;
+  return sanitizeWith(url, ALLOWED_IMAGE_SCHEMES);
 }
 
 // ---- Block nodes -----------------------------------------------------------

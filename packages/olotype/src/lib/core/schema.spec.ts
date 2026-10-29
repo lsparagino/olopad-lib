@@ -28,6 +28,34 @@ describe('sanitizeUrl', () => {
     expect(sanitizeUrl(url)).toBeNull();
   });
 
+  // The browser strips these before reading the scheme, so all of them run as
+  // `javascript:` when rendered as an href.
+  it.each([
+    'java\tscript:alert(1)',
+    'java\nscript:alert(1)',
+    'jav\r\nascript:alert(1)',
+    '\x01javascript:alert(1)',
+    '\x00\x1fjavascript:alert(1)',
+    '\tjava\tscript\t:alert(1)',
+    'vb\tscript:msgbox(1)',
+    'da\nta:text/html,<script>alert(1)</script>',
+  ])('rejects dangerous schemes hidden by URL-parser whitespace %j', (url) => {
+    expect(sanitizeUrl(url)).toBeNull();
+  });
+
+  it.each(['file:///etc/passwd', 'blob:https://example.com/x', 'ftp://example.com', 'foo:bar'])(
+    'rejects schemes outside the allowlist %s',
+    (url) => {
+      expect(sanitizeUrl(url)).toBeNull();
+    },
+  );
+
+  it('allows tel: links and protocol-relative urls', () => {
+    expect(sanitizeUrl('tel:+390612345678')).toBe('tel:+390612345678');
+    expect(sanitizeUrl('//example.com/a')).toBe('//example.com/a');
+    expect(sanitizeUrl('#section')).toBe('#section');
+  });
+
   it('allows urls that merely contain the disallowed words elsewhere', () => {
     expect(sanitizeUrl('https://example.com/javascript:foo')).toBe(
       'https://example.com/javascript:foo',
@@ -55,9 +83,12 @@ describe('sanitizeImageSrc', () => {
     expect(sanitizeImageSrc('/img/a.png')).toBe('/img/a.png');
   });
 
-  it.each(['javascript:alert(1)', 'VBScript:foo'])('rejects script-executable scheme %s', (url) => {
-    expect(sanitizeImageSrc(url)).toBeNull();
-  });
+  it.each(['javascript:alert(1)', 'VBScript:foo', 'java\tscript:alert(1)', '\x01javascript:alert(1)'])(
+    'rejects script-executable scheme %j',
+    (url) => {
+      expect(sanitizeImageSrc(url)).toBeNull();
+    },
+  );
 
   it.each([null, undefined, '', '   '])('returns null for empty input %s', (value) => {
     expect(sanitizeImageSrc(value as string | null | undefined)).toBeNull();
